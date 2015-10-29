@@ -23,38 +23,29 @@ float objective(GAGenome &);
 
 // Every genome must have an initializer.  Here we declare our own initializer
 // that will be used in this example.
-void AlphabetInitializer(GAGenome &);
+void OperatorsInitializer(GAGenome &);
 
+int values[6];
+int optimal;
+int length = 5;
+int popsize  = 100;
+int ngen     = 500;
+float pmut   = 0.001;
+float pcross = 0.9;
 
 int
 main(int argc, char *argv[])
 {
-  cout << "Example 12\n\n";
-  cout << "This program illustrates the use of order-based strings.  The\n";
-  cout << "string in this problem contains 26 letters, a to z.  It tries\n";
-  cout << "to put them in alphabetic order.\n\n";
-  cout.flush();
-
-// See if we've been given a seed to use (for testing purposes).  When you
-// specify a random seed, the evolution will be exactly the same each time
-// you use that seed number.
-
-  for(int ii=1; ii<argc; ii++) {
-    if(strcmp(argv[ii++],"seed") == 0) {
-      GARandomSeed((unsigned int)atoi(argv[ii]));
-    }
+  if(argc != 8){
+    fputs("You must indicate 6 numbers and the result do you expect\n", stderr);
+    return -1;
   }
 
-// Set the default values of the parameters then parse for command line changes
+  for (int i=1; i<(argc-1); i++) {
+    values[i-1] = atoi(argv[i]);
+  }
 
-  int i;
-  GAParameterList params;
-  GASteadyStateGA::registerDefaultParameters(params);
-  params.set(gaNpopulationSize, 25);	// population size
-  params.set(gaNpCrossover, 0.9);	// probability of crossover 
-  params.set(gaNpMutation, 0.01);	// probability of mutation
-  params.set(gaNnGenerations, 4000);	// number of generations
-  params.parse(argc, argv, gaFalse);
+  optimal = atoi(argv[argc-1]);
 
 // Now create the GA and run it.  We first create a genome with the
 // operators we want.  Since we're using a template genome, we must assign
@@ -62,60 +53,86 @@ main(int argc, char *argv[])
 // the crossover operator.
 
   GAStringAlleleSet alleles;
-  for(i=0; i<26; i++)
-    alleles.add('a'+i);
+  alleles.add('+');
+  alleles.add('-');
+  alleles.add('*');
 
-  GAStringGenome genome(26, alleles, objective);
-  genome.initializer(AlphabetInitializer);
-  genome.mutator(GAStringSwapMutator);
+  GAStringGenome genome(length, alleles, objective);
+  cout << "poblacion inicial";
+  genome.initializer(OperatorsInitializer);
+  ///genome.mutator(GAStringSwapMutator);
+  cout << "______________";
 
-  GASteadyStateGA ga(genome);
-  ga.parameters(params);
-  ga.crossover(GAStringPartialMatchCrossover);
+  GASimpleGA ga(genome);
+  ga.populationSize(popsize);
+  ga.nGenerations(ngen);
+  ga.pMutation(pmut);
+  ga.pCrossover(pcross);
+  ga.minimize();
+  ga.crossover(GAStringOnePointCrossover);
   ga.evolve();
 
   genome = ga.statistics().bestIndividual();
-  cout << "the ga generated the following string (objective score is ";
-  cout << genome.score() << "):\n" << genome << "\n";
+  cout << "the ga generated the following string (objective score is \n";
+  cout << genome.score();
+  cout << "\n" << genome << "\n";
   cout << genome.className() << "\n";
-
   return 0;
 }
- 
 
+int Operations(int a, int b, char op){
+  if (op == '+'){
+    return a + b;
+  }
+  else if (op == '-'){
+    return a - b;
+  }
+  else {
+    return a * b;
+  }
+}
 
 /* ----------------------------------------------------------------------------
 Objective function
-  The objective function gives one point for every number in the correct
-position.  We're trying to get a sequence of numbers from n to 0 in descending
-order.
+  The objective function try to minimize the difference betweent the operations
+  defined by the genome and 852.
 ---------------------------------------------------------------------------- */
 float
 objective(GAGenome & c)
 {
   GAStringGenome & genome = (GAStringGenome &)c;
 
-  float score = 0;
-  for(int i=0; i<genome.size(); i++)
-    score += (genome.gene(i) == 'a' + i);
-  return score;
+  //int values [] = {25,6,9,75,50,3};
+  int result = values [0];
+  for(int i=0; i<genome.size(); i++){
+    result = Operations (result, values[i+1], genome.gene(i));
+  }
+  cout << "\n\nresult\n";
+  cout << result;
+  cout << "\ngenome\n";
+  cout << genome;
+  return abs(result - optimal);
 }
 
 
 
 /* ----------------------------------------------------------------------------
-AlphabetInitializer
-  This initializer creates a string genome with the letters a-z as its 
+OperatorsInitializer
+  This initializer creates a string genome with the letters +-* as its
 elements.  Once we have assigned all the values, we randomize the string.
 ---------------------------------------------------------------------------- */
 void
-AlphabetInitializer(GAGenome & c)
+OperatorsInitializer(GAGenome & c)
 {
   GAStringGenome &genome=(GAStringGenome &)c;
   int i;
-  for(i=0; i<genome.size(); i++)
-    genome.gene(25-i, 'a'+i);
-
+  char operators [] = {'+', '-', '*'};
+  for (i = 0; i < genome.size(); i ++){
+    genome.gene(i, operators[GARandomInt(0, 2)]);
+  }
   for(i=0; i<genome.size(); i++)
     if(GARandomBit()) genome.swap(i, GARandomInt(0, genome.size()-1));
+  //
+  cout << genome;
+  cout << "\n";
 }
