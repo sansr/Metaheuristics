@@ -10,13 +10,16 @@ GALIB_VER=247
 TMPDIR=/var/tmp
 RELDIR=$(TMPDIR)/galib$(GALIB_VER)
 
-all: lib ex
+all: lib cipher_game #ex
 
 lib:
 	cd ga; $(MAKE)
 
-ex:
-	cd examples; $(MAKE)
+cipher_game:
+	cd ..; $(MAKE)
+
+#ex:
+#	cd examples; $(MAKE)
 
 test: lib ex
 	cd examples; $(MAKE) test
@@ -29,6 +32,7 @@ uninstall:
 
 clean:
 	cd ga; $(MAKE) clean
+	cd ..; $(MAKE) clean
 	cd examples; $(MAKE) clean
 
 release: clean 
