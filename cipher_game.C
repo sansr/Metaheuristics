@@ -30,7 +30,7 @@ int optimal;
 int length = 5;
 int popsize  = 100;
 int ngen     = 500;
-float pmut   = 0.001;
+float pmut   = 0.1;
 float pcross = 0.9;
 
 int
@@ -61,7 +61,7 @@ main(int argc, char *argv[])
   cout << "poblacion inicial";
   genome.initializer(OperatorsInitializer);
   ///genome.mutator(GAStringSwapMutator);
-  cout << "______________";
+  cout << "______________\n";
 
   GASimpleGA ga(genome);
   ga.populationSize(popsize);
@@ -73,10 +73,12 @@ main(int argc, char *argv[])
   ga.evolve();
 
   genome = ga.statistics().bestIndividual();
-  cout << "the ga generated the following string (objective score is \n";
+  cout << ga.statistics();
+  cout << "the ga generated the following string objective score is:\t";
   cout << genome.score();
-  cout << "\n" << genome << "\n";
-  cout << genome.className() << "\n";
+  cout << "\n";
+  //cout << "\n" << genome << "\n";
+  //cout << genome.className() << "\n";
   return 0;
 }
 
@@ -107,10 +109,11 @@ objective(GAGenome & c)
   for(int i=0; i<genome.size(); i++){
     result = Operations (result, values[i+1], genome.gene(i));
   }
-  cout << "\n\nresult\n";
+  cout << "\n\nValor de la funcion objetivo:\t";
   cout << result;
-  cout << "\ngenome\n";
+  cout << "\nGenoma del individuo:\t";
   cout << genome;
+  cout << "\n";
   return abs(result - optimal);
 }
 
