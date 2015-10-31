@@ -58,7 +58,7 @@ main(int argc, char *argv[])
   alleles.add('*');
 
   GAStringGenome genome(length, alleles, objective);
-  cout << "poblacion inicial";
+  // cout << "poblacion inicial";
   genome.initializer(OperatorsInitializer);
   ///genome.mutator(GAStringSwapMutator);
   cout << "______________\n";
@@ -72,7 +72,14 @@ main(int argc, char *argv[])
   ga.crossover(GAStringOnePointCrossover);
   ga.evolve();
 
+
+
   genome = ga.statistics().bestIndividual();
+  cout << "\n\n\nAlgorítmo : ";
+  cout << ga.className() << "\n";
+  cout << "Parámetros ::\n";
+  cout << ga.parameters() << "\n";
+  cout << "Estadísticas\n";
   cout << ga.statistics();
   cout << "\nthe ga generated the following string objective score is:\t";
   cout << genome.score() << "\n";
@@ -80,6 +87,7 @@ main(int argc, char *argv[])
   cout << "\n";
   //cout << "\n" << genome << "\n";
   //cout << genome.className() << "\n";
+
   return 0;
 }
 
@@ -110,11 +118,11 @@ objective(GAGenome & c)
   for(int i=0; i<genome.size(); i++){
     result = Operations (result, values[i+1], genome.gene(i));
   }
-  cout << "\n\nValor de la funcion objetivo:\t";
-  cout << result;
-  cout << "\nGenoma del individuo:\t";
-  cout << genome;
-  cout << "\n";
+  // cout << "\n\nValor de la funcion objetivo:\t";
+  // cout << result;
+  // cout << "\nGenoma del individuo:\t";
+  // cout << genome;
+  // cout << "\n";
   return abs(result - optimal);
 }
 
@@ -137,6 +145,6 @@ OperatorsInitializer(GAGenome & c)
   for(i=0; i<genome.size(); i++)
     if(GARandomBit()) genome.swap(i, GARandomInt(0, genome.size()-1));
   //
-  cout << genome;
-  cout << "\n";
+  // cout << genome;
+  // cout << "\n";
 }
