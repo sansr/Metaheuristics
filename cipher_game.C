@@ -74,8 +74,9 @@ main(int argc, char *argv[])
 
   genome = ga.statistics().bestIndividual();
   cout << ga.statistics();
-  cout << "the ga generated the following string objective score is:\t";
-  cout << genome.score();
+  cout << "\nthe ga generated the following string objective score is:\t";
+  cout << genome.score() << "\n";
+  cout << "the genome is:\t" << genome;
   cout << "\n";
   //cout << "\n" << genome << "\n";
   //cout << genome.className() << "\n";
