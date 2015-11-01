@@ -31,9 +31,9 @@ GABoolean GATerminateWhenIsFounded(GAGeneticAlgorithm &ga);
 int values[6];
 int optimal;
 int length = 5;
-int popsize  = 100;
-int ngen     = 500;
-float pmut   = 0.1;
+int popsize  = 50;
+int ngen     = 250;
+float pmut   = 0.05;
 float pcross = 0.9;
 
 int
