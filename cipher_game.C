@@ -91,15 +91,15 @@ main(int argc, char *argv[])
   return 0;
 }
 
-int Operations(int a, int b, char op){
-  if (op == '+'){
-    return a + b;
+int Operations(int firstOperator, int secondOperator, char operation){
+  if (operation == '+'){
+    return firstOperator + secondOperator;
   }
-  else if (op == '-'){
-    return a - b;
+  else if (operation == '-'){
+    return firstOperator - secondOperator;
   }
   else {
-    return a * b;
+    return firstOperator * secondOperator;
   }
 }
 
