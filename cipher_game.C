@@ -25,6 +25,9 @@ float objective(GAGenome &);
 // that will be used in this example.
 void OperatorsInitializer(GAGenome &);
 
+// Termition method
+GABoolean GATerminateWhenIsFounded(GAGeneticAlgorithm &ga);
+
 int values[6];
 int optimal;
 int length = 5;
@@ -70,6 +73,7 @@ main(int argc, char *argv[])
   ga.pCrossover(pcross);
   ga.minimize();
   ga.crossover(GAStringOnePointCrossover);
+  ga.terminator(GATerminateWhenIsFounded);
   ga.evolve();
 
 
@@ -147,4 +151,14 @@ OperatorsInitializer(GAGenome & c)
   //
   // cout << genome;
   // cout << "\n";
+}
+
+GABoolean GATerminateWhenIsFounded(GAGeneticAlgorithm &ga)
+{
+    if(ga.generation() == ga.nGenerations()){
+      return gaTrue;
+    }
+    else {
+      return (ga.statistics().bestIndividual().score() == 0 ? gaTrue : gaFalse);
+    }
 }
