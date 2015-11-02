@@ -119,11 +119,11 @@ objective(GAGenome & c)
   for(int i=0; i<genome.size(); i++){
     result = Operations (result, values[i+1], genome.gene(i));
   }
-  // cout << "\n\nValor de la funcion objetivo:\t";
-  // cout << result;
-  // cout << "\nGenoma del individuo:\t";
-  // cout << genome;
-  // cout << "\n";
+  cout << "\n\nValor de la funcion objetivo:\t";
+  cout << result;
+  cout << "\nGenoma del individuo:\t";
+  cout << genome;
+  cout << "\n";
   return abs(result - optimal);
 }
 
