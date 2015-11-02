@@ -1,10 +1,7 @@
 /* ----------------------------------------------------------------------------
-  ex12.C
-  mbwall 13apr95
-  Copyright (c) 1995-1996  Massachusetts Institute of Technology
+  AUTHORS: Lissete Moscoso León, Sandra Sáez Raspeño
 
- DESCRIPTION:
-   This example shows how to use an order-based string genome.
+ DESCRIPTION: Cipher game implementation using a genetic algorithm
 ---------------------------------------------------------------------------- */
 #include <stdio.h>
 #include <stdlib.h>
