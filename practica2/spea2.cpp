@@ -118,7 +118,7 @@ void spea2::evolve(population &pop) const
 		pagmo_throw(value_error,"The problem is not box constrained and spea2 is not suitable to solve it");
 	}
 
-	if( prob_f_dimension < 2 ){ //numero de objetivos
+	if( prob_f_dimension < 2 ){
 		pagmo_throw(value_error,"The problem is not multi-objective. Use a single-objectie optimization algorithm instead");
 	}
 
@@ -131,18 +131,18 @@ void spea2::evolve(population &pop) const
 		return;
 	}
 
-	if (archive_size > NP) {      [asfdas,dfafd,sdafad,dfasdf,ddd] < archive_size // depende de si es restringido lo quitamos o lo dejamos, y explicamos
+	if (archive_size > NP) {
 		pagmo_throw(value_error,"archive_size must be smaller than the population size");
 	}
 
-	std::vector<spea2_individual> new_pop(NP,spea2_individual()); // new_pop poblacion
+	std::vector<spea2_individual> new_pop(NP,spea2_individual());
 	for(unsigned int i=0; i < NP; ++i) {
 		new_pop[i].x = pop.get_individual(i).cur_x;
 		new_pop[i].f = pop.get_individual(i).cur_f;
 		new_pop[i].c = pop.get_individual(i).cur_c;
 	}
 
-	std::vector<spea2_individual> archive(archive_size,spea2_individual());  // pareto
+	std::vector<spea2_individual> archive(archive_size,spea2_individual());
 	std::vector<population::size_type> ordered_by_fitness;
 
 	//the cycle is until m_gen+1, at the last generation we just calculate the archive and return it as new population (no variation operatotions are performed)
@@ -154,18 +154,18 @@ void spea2::evolve(population &pop) const
 			}
 		}
 
-		std::vector<double> F(new_pop.size(),0); // vecotr del tamaño de la poblacion de 0
+		std::vector<double> F(new_pop.size(),0);
 
-		
+
 		//1 - Computation of individuals' fitness (according to raw fitness and density)
-		compute_spea2_fitness(F, sqrt(new_pop.size()), new_pop, prob);
+		compute_spea2_fitness(F, NP , new_pop, prob);
 
-		ordered_by_fitness = pagmo::util::neighbourhood::order(F); 
+		ordered_by_fitness = pagmo::util::neighbourhood::order(F);
 
 		unsigned int n_non_dominated;
-		for(n_non_dominated = 0; n_non_dominated < F.size() && F[ordered_by_fitness[n_non_dominated]] < 1; ++n_non_dominated); // coge los no dominados de entre toda la poblacion
+		for(n_non_dominated = 0; n_non_dominated < F.size() && F[ordered_by_fitness[n_non_dominated]] < 1; ++n_non_dominated);
 
-		//2 - Fill the archive (Environmental selection)   // cambiar y luego aplicar clustering
+		//2 - Fill the archive (Environmental selection)
 		if(n_non_dominated > archive_size) { //truncate according to delta
 
 			archive = std::vector<spea2_individual>(n_non_dominated,spea2_individual());
@@ -180,10 +180,10 @@ void spea2::evolve(population &pop) const
 			}
 
 			//computing K-NN distances for K=0,...,n_non_dominated
-			/*std::vector<std::vector<pagmo::population::size_type> > neighbours_nd;
+			std::vector<std::vector<pagmo::population::size_type> > neighbours_nd;
 			pagmo::util::neighbourhood::euclidian::compute_neighbours(neighbours_nd, fit_nd);
 			std::vector<population::size_type> rv(n_non_dominated);
-			for(unsigned int i=0; i<n_non_dominated; ++i) rv[i] = i;*/
+			for(unsigned int i=0; i<n_non_dominated; ++i) rv[i] = i;
 
 			while(archive.size() > archive_size) {
 
@@ -314,6 +314,26 @@ std::string spea2::human_readable_extra() const
 	return s.str();
 }
 
+std::vector<std::vector<population::size_type> > spea2::compute_not_dominated(const pagmo::problem::base &prob,
+																   const std::vector<fitness_vector> &fit,
+																   const std::vector<constraint_vector> &cons) const
+{
+	std::vector<int> dummy;
+	std::vector<std::vector<int>> is_pareto(fit.size(), dummy);
+
+	for(unsigned int i=0; i<fit.size();++i) {
+		is_pareto[i].push_back(123); // si no es dominado solo tendra longitud 1
+		for(unsigned int j=0; j<fit.size(); ++j) {
+			// Check if individual in position i dominates individual in position n.
+			if(prob.compare_fc(fit[j],cons[j],fit[i],cons[i])) {
+				is_pareto[i].push_back(j);
+				break;
+			}
+		}
+	}
+	return domination_list;
+}
+
 std::vector<std::vector<population::size_type> > spea2::compute_domination_list(const pagmo::problem::base &prob,
 																   const std::vector<fitness_vector> &fit,
 																   const std::vector<constraint_vector> &cons) const
@@ -333,10 +353,10 @@ std::vector<std::vector<population::size_type> > spea2::compute_domination_list(
 	return domination_list;
 }
 
-void spea2::compute_spea2_fitness(std::vector<double> &F, // vector de pareto
-			int K, // 
-			const std::vector<spea2_individual> &pop, //poblacion
-			const pagmo::problem::base &prob) const 
+void spea2::compute_spea2_fitness(std::vector<double> &F,
+			int pobl_size,
+			const std::vector<spea2_individual> &pop,
+			const pagmo::problem::base &prob) const
 {
 
 	const population::size_type NP = pop.size();
@@ -353,6 +373,7 @@ void spea2::compute_spea2_fitness(std::vector<double> &F, // vector de pareto
 	pagmo::util::neighbourhood::euclidian::compute_neighbours(neighbours, fit);
 
 	std::vector<std::vector<population::size_type> > domination_list = compute_domination_list(prob, fit,cons);
+	std::vector<std::bool> not_dominated_list = compute_not_dominated(prob, fit,cons);
 
 	for(unsigned int i=0; i<NP; ++i) {
 		S[i] = domination_list[i].size();
@@ -361,14 +382,17 @@ void spea2::compute_spea2_fitness(std::vector<double> &F, // vector de pareto
 	std::fill(F.begin(), F.end(), 0);
 
 	for(unsigned int i=0; i<NP; ++i) {
-		for(unsigned int j=0; j<domination_list[i].size(); ++j) {
-			F[domination_list[i][j]] += S[i];
+		if(not_dominated_list[i].size() == 1){ // no dominado
+				F[i] += S[i]/(pobl_size + 1);
 		}
 	}
-
 	for(unsigned int i=0; i<NP; ++i) {
-		F[i] = F[i] +
-				(1.0 / (pagmo::util::neighbourhood::euclidian::distance(fit[i], fit[neighbours[i][K]]) + 2));
+		for(unsigned int j=1; j<not_dominated_list[i].size(); ++j) {
+			if(not_dominated_list[i].size()!= 1){ // dominado
+				F[i] = 1;
+				F[i] += F[j];
+			}
+		}
 	}
 }
 
