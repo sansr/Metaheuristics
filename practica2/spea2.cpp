@@ -318,8 +318,8 @@ std::vector<std::vector<population::size_type> > spea2::compute_not_dominated(co
 																   const std::vector<fitness_vector> &fit,
 																   const std::vector<constraint_vector> &cons) const
 {
-	std::vector<int> dummy;
-	std::vector<std::vector<int>> is_pareto(fit.size(), dummy);
+	std::vector<population::size_type> dummy;
+	std::vector<std::vector<population::size_type> > is_pareto(fit.size(), dummy);
 
 	for(unsigned int i=0; i<fit.size();++i) {
 		is_pareto[i].push_back(123); // si no es dominado solo tendra longitud 1
@@ -327,11 +327,10 @@ std::vector<std::vector<population::size_type> > spea2::compute_not_dominated(co
 			// Check if individual in position i dominates individual in position n.
 			if(prob.compare_fc(fit[j],cons[j],fit[i],cons[i])) {
 				is_pareto[i].push_back(j);
-				break;
 			}
 		}
 	}
-	return domination_list;
+	return is_pareto;
 }
 
 std::vector<std::vector<population::size_type> > spea2::compute_domination_list(const pagmo::problem::base &prob,
@@ -373,7 +372,7 @@ void spea2::compute_spea2_fitness(std::vector<double> &F,
 	pagmo::util::neighbourhood::euclidian::compute_neighbours(neighbours, fit);
 
 	std::vector<std::vector<population::size_type> > domination_list = compute_domination_list(prob, fit,cons);
-	std::vector<std::bool> not_dominated_list = compute_not_dominated(prob, fit,cons);
+	std::vector<std::vector<population::size_type> > not_dominated_list = compute_not_dominated(prob, fit,cons);
 
 	for(unsigned int i=0; i<NP; ++i) {
 		S[i] = domination_list[i].size();
