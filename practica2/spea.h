@@ -22,8 +22,8 @@
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.               *
  *****************************************************************************/
 
-#ifndef PAGMO_ALGORITHM_SPEA2_H
-#define PAGMO_ALGORITHM_SPEA2_H
+#ifndef PAGMO_ALGORITHM_SPEA_H
+#define PAGMO_ALGORITHM_SPEA_H
 
 #include "../config.h"
 #include "../serialization.h"
@@ -32,24 +32,24 @@
 
 namespace pagmo { namespace algorithm {
 
-class  distance_sorter {
+class  distance_sorter_spea {
 public:
-	distance_sorter(const std::vector<std::vector<pagmo::population::size_type>  > &neighbours,
+	distance_sorter_spea(const std::vector<std::vector<pagmo::population::size_type>  > &neighbours,
 					const std::vector<fitness_vector> &fit):
 		m_neighbours(neighbours),
 		m_fit(fit) {}
 	bool operator()(unsigned int a, unsigned int b) {
 		if(a>=m_fit.size() || a>=m_neighbours.size()){
-			pagmo_throw(value_error,"SPEA2 sorting of KNN values failure");
+			pagmo_throw(value_error,"SPEA sorting of KNN values failure");
 		}
 		if(b>=m_fit.size() || b>=m_neighbours.size()){
-			pagmo_throw(value_error,"SPEA2 sorting of KNN values failure");
+			pagmo_throw(value_error,"SPEA sorting of KNN values failure");
 		}
 		double delta_a, delta_b;
 		unsigned int i = 0;
 		do{
 			if(m_neighbours[b][i]>=m_fit.size() || m_neighbours[a][i]>=m_fit.size()){
-				pagmo_throw(value_error,"SPEA2 sorting of KNN values failure");
+				pagmo_throw(value_error,"SPEA sorting of KNN values failure");
 			}
 			delta_a = pagmo::util::neighbourhood::euclidian::distance(m_fit[a], m_fit[m_neighbours[a][i]]);
 			delta_b = pagmo::util::neighbourhood::euclidian::distance(m_fit[b], m_fit[m_neighbours[b][i]]);
@@ -62,10 +62,10 @@ private:
 	const std::vector<fitness_vector> &m_fit;
 };
 
-/// "Strength Pareto Evolutionary Algorithm (SPEA2)"
+/// "Strength Pareto Evolutionary Algorithm (SPEA)"
 /**
  *
- * Strength Pareto Evolutionary Algorithm (SPEA2) is a multi-objective optimization algorithm.
+ * Strength Pareto Evolutionary Algorithm (SPEA) is a multi-objective optimization algorithm.
  * The quality of an individual is measured taking into consideration its pareto strenght and its distance to its
  * K-th neighbour, where \f$ K=\sqrt{pop size + archive size} \f$
  * It uses an external archive in which are stored the non dominated solutions found so far.
@@ -75,12 +75,12 @@ private:
  * @author Andrea Mambrini (andrea.mambrini@gmail.com)
  * @author Annalisa Riccardi (nina1983@gmail.com)
  *
- * @see Eckart Zitzler, Marco Laumanns, and Lothar Thiele -- "SPEA2: Improving the Strength Pareto Evolutionary Algorithm"
+ * @see Eckart Zitzler, Marco Laumanns, and Lothar Thiele -- "SPEA: Improving the Strength Pareto Evolutionary Algorithm"
  **/
-class __PAGMO_VISIBLE spea2: public base
+class __PAGMO_VISIBLE spea: public base
 {
 public:
-	spea2(int gen=100, double cr = 0.95, double eta_c = 10, double m = 0.01, double eta_m = 50, int archive_size = 0);
+	spea(int gen=100, double cr = 0.95, double eta_c = 10, double m = 0.01, double eta_m = 50, int archive_size = 0);
 	base_ptr clone() const;
 	void evolve(population &) const;
 	std::string get_name() const;
@@ -89,14 +89,14 @@ protected:
 	std::string human_readable_extra() const;
 
 private:
-	struct spea2_individual {
+	struct spea_individual {
 		decision_vector x; // vector de doubles
 		fitness_vector f; // vector de doubles
 		constraint_vector c; // vector de doubles
 	};
-	void compute_spea2_fitness(std::vector<double> &,
+	void compute_spea_fitness(std::vector<double> &,
 				int K,
-				const std::vector<spea2_individual> &pop,
+				const std::vector<spea_individual> &pop,
 				const pagmo::problem::base &prob) const;
 	std::vector<std::vector<population::size_type> > compute_domination_list(const pagmo::problem::base &,
 																			const std::vector<fitness_vector> &,
@@ -109,7 +109,7 @@ private:
 													  const std::vector<population::size_type> &) const;
 	std::vector<population::size_type> compute_domination_count(const std::vector<std::vector<population::size_type> > &) const;
 	void crossover(decision_vector&, decision_vector&, pagmo::population::size_type, pagmo::population::size_type,
-				   const std::vector<spea2_individual> &, const pagmo::problem::base &) const;
+				   const std::vector<spea_individual> &, const pagmo::problem::base &) const;
 	void mutate(decision_vector&, const pagmo::problem::base&) const;
 	friend class boost::serialization::access;
 	template <class Archive>
@@ -139,6 +139,6 @@ private:
 
 }} //namespaces
 
-BOOST_CLASS_EXPORT_KEY(pagmo::algorithm::spea2)
+BOOST_CLASS_EXPORT_KEY(pagmo::algorithm::spea)
 
-#endif // PAGMO_ALGORITHM_SPEA2_H
+#endif // PAGMO_ALGORITHM_SPEA_H

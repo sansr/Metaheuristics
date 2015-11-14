@@ -39,13 +39,13 @@
 #include "../population.h"
 #include "../util/neighbourhood.h"
 #include "base.h"
-#include "spea2.h"
+#include "spea.h"
 
 
 namespace pagmo { namespace algorithm {
 /// Constructor
  /**
- * Constructs a SPEA2 algorithm
+ * Constructs a SPEA algorithm
  *
  * @param[in] gen Number of generations to evolve.
  * @param[in] cr Crossover probability
@@ -56,7 +56,7 @@ namespace pagmo { namespace algorithm {
  *
  * @throws value_error if gen is negative
  */
-spea2::spea2(int gen, double cr, double eta_c, double m, double eta_m, int archive_size):base(),
+spea::spea(int gen, double cr, double eta_c, double m, double eta_m, int archive_size):base(),
 	m_gen(gen),m_cr(cr),m_eta_c(eta_c),m_m(m),m_eta_m(eta_m),m_archive_size(archive_size)
 {
 	if (gen < 0) {
@@ -83,18 +83,18 @@ spea2::spea2(int gen, double cr, double eta_c, double m, double eta_m, int archi
 }
 
 /// Clone method.
-base_ptr spea2::clone() const
+base_ptr spea::clone() const
 {
-	return base_ptr(new spea2(*this));
+	return base_ptr(new spea(*this));
 }
 
 /// Evolve implementation.
 /**
- * Run the SPEA2 algorithm for the number of generations specified in the constructors.
+ * Run the SPEA algorithm for the number of generations specified in the constructors.
  *
  * @param[in,out] pop input/output pagmo::population to be evolved.
  */
-void spea2::evolve(population &pop) const
+void spea::evolve(population &pop) const
 {
 	// Let's store some useful variables.
 	const problem::base             &prob = pop.problem();
@@ -109,13 +109,16 @@ void spea2::evolve(population &pop) const
 		archive_size = static_cast<population::size_type>(m_archive_size);
 	}
 
+
+
 	//We perform some checks to determine wether the problem/population are suitable for PSO
 	if( Dc == 0 ){
-		pagmo_throw(value_error,"There is no continuous part in the problem decision vector for spea2 to optimise");
+		std::cout << "\n";
+		// pagmo_throw(value_error,"There is no continuous part in the problem decision vector for spea to optimise");
 	}
 
 	if( prob_c_dimension != 0 ){
-		pagmo_throw(value_error,"The problem is not box constrained and spea2 is not suitable to solve it");
+		pagmo_throw(value_error,"The problem is not box constrained and spea is not suitable to solve it");
 	}
 
 	if( prob_f_dimension < 2 ){
@@ -123,7 +126,7 @@ void spea2::evolve(population &pop) const
 	}
 
 	if (NP < 5 || (NP % 4 != 0) ) {
-		pagmo_throw(value_error, "for SPEA2 at least 5 individuals in the population are needed and the population size must be a multiple of 4");
+		pagmo_throw(value_error, "for SPEA at least 5 individuals in the population are needed and the population size must be a multiple of 4");
 	}
 
 	// Get out if there is nothing to do.
@@ -135,14 +138,14 @@ void spea2::evolve(population &pop) const
 		pagmo_throw(value_error,"archive_size must be smaller than the population size");
 	}
 
-	std::vector<spea2_individual> new_pop(NP,spea2_individual());
+	std::vector<spea_individual> new_pop(NP,spea_individual());
 	for(unsigned int i=0; i < NP; ++i) {
 		new_pop[i].x = pop.get_individual(i).cur_x;
 		new_pop[i].f = pop.get_individual(i).cur_f;
 		new_pop[i].c = pop.get_individual(i).cur_c;
 	}
 
-	std::vector<spea2_individual> archive(archive_size,spea2_individual());
+	std::vector<spea_individual> archive(archive_size,spea_individual());
 	std::vector<population::size_type> ordered_by_fitness;
 
 	//the cycle is until m_gen+1, at the last generation we just calculate the archive and return it as new population (no variation operatotions are performed)
@@ -158,7 +161,7 @@ void spea2::evolve(population &pop) const
 
 
 		//1 - Computation of individuals' fitness (according to raw fitness and density)
-		compute_spea2_fitness(F, NP , new_pop, prob);
+		compute_spea_fitness(F, NP , new_pop, prob);
 
 		ordered_by_fitness = pagmo::util::neighbourhood::order(F);
 
@@ -168,7 +171,7 @@ void spea2::evolve(population &pop) const
 		//2 - Fill the archive (Environmental selection)
 		if(n_non_dominated > archive_size) { //truncate according to delta
 
-			archive = std::vector<spea2_individual>(n_non_dominated,spea2_individual());
+			archive = std::vector<spea_individual>(n_non_dominated,spea_individual());
 			for(unsigned int i = 0; i < n_non_dominated; ++i) {
 				archive[i] = new_pop[ordered_by_fitness[i]];
 			}
@@ -188,7 +191,7 @@ void spea2::evolve(population &pop) const
 			while(archive.size() > archive_size) {
 
 				//Calculate which is the worst element according to the distance sorter
-				pagmo::population::size_type idx_to_delete = *(std::max_element(rv.begin(), rv.end(), distance_sorter(neighbours_nd, fit_nd)));
+				pagmo::population::size_type idx_to_delete = *(std::max_element(rv.begin(), rv.end(), distance_sorter_spea(neighbours_nd, fit_nd)));
 
 				//Remove the element from rv, archive and fit_nd
 				rv.erase(rv.end()-1);
@@ -260,12 +263,12 @@ void spea2::evolve(population &pop) const
 					mutate(child1_x,prob);
 					mutate(child2_x,prob);
 
-					spea2_individual child1;
+					spea_individual child1;
 					child1.x = child1_x;
 					child1.f = prob.objfun(child1_x);
 					child1.c = prob.compute_constraints(child1_x);
 
-					spea2_individual child2;
+					spea_individual child2;
 					child2.x = child2_x;
 					child2.f = prob.objfun(child2_x);
 					child2.c = prob.compute_constraints(child2_x);
@@ -293,16 +296,16 @@ void spea2::evolve(population &pop) const
 
 
 /// Algorithm name
-std::string spea2::get_name() const
+std::string spea::get_name() const
 {
-	return "Strength Pareto Evolutionary Algorithm (SPEA2)";
+	return "Strength Pareto Evolutionary Algorithm (SPEA)";
 }
 
 /// Extra human readable algorithm info.
 /**
  * Will return a formatted string displaying the parameters of the algorithm.
  */
-std::string spea2::human_readable_extra() const
+std::string spea::human_readable_extra() const
 {
 	std::ostringstream s;
 	s << "gen:" << m_gen << ' ';
@@ -314,7 +317,7 @@ std::string spea2::human_readable_extra() const
 	return s.str();
 }
 
-std::vector<std::vector<population::size_type> > spea2::compute_not_dominated(const pagmo::problem::base &prob,
+std::vector<std::vector<population::size_type> > spea::compute_not_dominated(const pagmo::problem::base &prob,
 																   const std::vector<fitness_vector> &fit,
 																   const std::vector<constraint_vector> &cons) const
 {
@@ -333,7 +336,7 @@ std::vector<std::vector<population::size_type> > spea2::compute_not_dominated(co
 	return is_pareto;
 }
 
-std::vector<std::vector<population::size_type> > spea2::compute_domination_list(const pagmo::problem::base &prob,
+std::vector<std::vector<population::size_type> > spea::compute_domination_list(const pagmo::problem::base &prob,
 																   const std::vector<fitness_vector> &fit,
 																   const std::vector<constraint_vector> &cons) const
 {
@@ -352,9 +355,9 @@ std::vector<std::vector<population::size_type> > spea2::compute_domination_list(
 	return domination_list;
 }
 
-void spea2::compute_spea2_fitness(std::vector<double> &F,
+void spea::compute_spea_fitness(std::vector<double> &F,
 			int pobl_size,
-			const std::vector<spea2_individual> &pop,
+			const std::vector<spea_individual> &pop,
 			const pagmo::problem::base &prob) const
 {
 
@@ -368,9 +371,6 @@ void spea2::compute_spea2_fitness(std::vector<double> &F,
 		fit[i]	=	pop[i].f;
 		cons[i]	=	pop[i].c;
 	}
-	std::vector<std::vector<pagmo::population::size_type> > neighbours;
-	pagmo::util::neighbourhood::euclidian::compute_neighbours(neighbours, fit);
-
 	std::vector<std::vector<population::size_type> > domination_list = compute_domination_list(prob, fit,cons);
 	std::vector<std::vector<population::size_type> > not_dominated_list = compute_not_dominated(prob, fit,cons);
 
@@ -395,14 +395,14 @@ void spea2::compute_spea2_fitness(std::vector<double> &F,
 	}
 }
 
-pagmo::population::size_type spea2::tournament_selection(pagmo::population::size_type idx1, pagmo::population::size_type idx2, const std::vector<population::size_type> &pareto_rank) const
+pagmo::population::size_type spea::tournament_selection(pagmo::population::size_type idx1, pagmo::population::size_type idx2, const std::vector<population::size_type> &pareto_rank) const
 {
 	if (pareto_rank[idx1] < pareto_rank[idx2]) return idx1;
 	if (pareto_rank[idx1] > pareto_rank[idx2]) return idx2;
 	return ((m_drng() > 0.5) ? idx1 : idx2);
 }
 
-std::vector<population::size_type> spea2::compute_domination_count(const std::vector<std::vector<population::size_type> > &dom_list) const
+std::vector<population::size_type> spea::compute_domination_count(const std::vector<std::vector<population::size_type> > &dom_list) const
 {
 	std::vector<population::size_type> domination_count(dom_list.size(),0);
 	for(unsigned int i=0; i<dom_list.size(); ++i) {
@@ -414,7 +414,7 @@ std::vector<population::size_type> spea2::compute_domination_count(const std::ve
 	return domination_count;
 }
 
-std::vector<population::size_type> spea2::compute_pareto_rank(const std::vector<std::vector<population::size_type> > &dom_list) const
+std::vector<population::size_type> spea::compute_pareto_rank(const std::vector<std::vector<population::size_type> > &dom_list) const
 {
 	std::vector<population::size_type> pareto_rank(dom_list.size(),0);
 
@@ -456,8 +456,8 @@ std::vector<population::size_type> spea2::compute_pareto_rank(const std::vector<
 }
 
 
-void spea2::crossover(decision_vector& child1, decision_vector& child2, pagmo::population::size_type parent1_idx, pagmo::population::size_type parent2_idx,
-					  const std::vector<spea2_individual> &pop, const pagmo::problem::base &prob) const
+void spea::crossover(decision_vector& child1, decision_vector& child2, pagmo::population::size_type parent1_idx, pagmo::population::size_type parent2_idx,
+					  const std::vector<spea_individual> &pop, const pagmo::problem::base &prob) const
 {
 
 	problem::base::size_type D = prob.get_dimension();
@@ -551,7 +551,7 @@ void spea2::crossover(decision_vector& child1, decision_vector& child2, pagmo::p
 	}
 }
 
-void spea2::mutate(decision_vector& child, const pagmo::problem::base& prob) const
+void spea::mutate(decision_vector& child, const pagmo::problem::base& prob) const
 {
 
 	problem::base::size_type D = prob.get_dimension();
@@ -610,4 +610,4 @@ void spea2::mutate(decision_vector& child, const pagmo::problem::base& prob) con
 
 }} //namespaces
 
-BOOST_CLASS_EXPORT_IMPLEMENT(pagmo::algorithm::spea2)
+BOOST_CLASS_EXPORT_IMPLEMENT(pagmo::algorithm::spea)
