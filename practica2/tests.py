@@ -3,8 +3,8 @@ from PyGMO.util import hypervolume as hypervolume
 from PyGMO.util import hv_algorithm as hv_algorithm
 import matplotlib.pyplot as plt
 import numpy
-#Quitar de la poblacion las soluciones dominadas.
-def quitar(pop):
+#eliminar_dominadas de la poblacion las soluciones dominadas.
+def eliminar_dominadas(pop):
     poblac=pop
     if (len(poblac.compute_pareto_fronts())==1):
         print 'Ya es no dominado'
@@ -46,7 +46,7 @@ while(contador<rep): #Para cada una de las 30 ejecuciones...
     alg = algorithm.spea2(gen=n_gen, cr=cross_rate, m=mut_rate, archive_size=archive_size) #Defino algoritmo SPEA
     pop1 = population(prob, pop_size) #Genero poblacion inicial aleatoria del problema ZDT
     pop1 = alg.evolve(pop1) #Poblacion final al ejecutar el algoritmo
-    pop1=quitar(pop1) #Dejo solo las soluciones no dominadas de la poblacion final
+    pop1=eliminar_dominadas(pop1) #Dejo solo las soluciones no dominadas de la poblacion final
     pop1.plot_pareto_fronts() #Pinto las soluciones en el grafico
     valores_pdistance=valores_pdistance+[prob.p_distance(pop1)] #Obtengo de la poblacion no dominada
     hv1= hypervolume(pop1) #Obtengo de la poblacion no dominada el hipervolumen
